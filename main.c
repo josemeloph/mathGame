@@ -92,7 +92,7 @@ void textColor(int letras, int fundo) {
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), letras + fundo);
 }
 
-void menu(int lin, int col, int opcoes[]) {
+int menu(int lin, int col, int opcoes[]) {
 	int i, lin2, col2, opcao = 0, teclaPressionada, tamOpcoes[2];
 	tamOpcoes[0] = snprintf(NULL, 0, "%d", opcoes[0]), tamOpcoes[1] = snprintf(NULL, 0, "%d", opcoes[1]);
 	while (1) {
@@ -131,6 +131,7 @@ void menu(int lin, int col, int opcoes[]) {
 			opcao = opcao + 2;
 		}
 	}
+	textColor(WHITE, _BLACK);
 	return opcao;
 }
 
@@ -236,25 +237,47 @@ void gerarOpcoes(int resposta, int opcoes[]) {
 	}
 }
 
-void printarExpressao(Expressao expressao, int opcoes[]) {
+void gerarQuestao(int opcoes[], int *certas) {
+	Expressao expressao;
+	int resposta, opcaoSelecionada;
+
+	gerarExpressao(&expressao);
+	resposta = calcularResposta(expressao);
+	gerarOpcoes(resposta, opcoes);
+	opcaoSelecionada = printarExpressao(expressao, opcoes);
+
+	if (resposta == opcoes[opcaoSelecionada]) (*certas)++;
+}
+
+int printarExpressao(Expressao expressao, int opcoes[]) {
 	linhaCol(4, 19 - expressao.tamanho);
 	printf("%d", expressao.n1);
 	linhaCol(4, 21);
 	printf("%c", expressao.op);
 	linhaCol(4, 23);
 	printf("%d", expressao.n2);
-
-	menu(6, 11, opcoes);
+	return menu(6, 11, opcoes);
 }
+
 
 
 int main() {
 	system("MODE con cols=41 lines=15 ");
 	srand(time(NULL));
-	int resposta;
-	Expressao expressao;
-	gerarExpressao(&expressao);
-	resposta = calcularResposta(expressao);
-	gerarOpcoes(resposta, _opcoes);
-	printarExpressao(expressao, _opcoes);
+	
+	int certas, total, qtdQuestoes;
+	qtdQuestoes = 10;
+	certas = total = 0;
+
+	while (total < qtdQuestoes) {
+		system("cls");
+		total++;
+		linhaCol(14, 12);
+		printf("Total: %d", total);
+		linhaCol(14, 22);
+		printf("Certas: %d", certas);
+		gerarQuestao(_opcoes, &certas);
+	}
+	getch();
+	system("cls");
 }
