@@ -5,6 +5,57 @@
 #include <math.h>
 #include <windows.h>
 
+
+//cores do texto
+enum {
+	BLACK,                 
+	BLUE,                  
+	GREEN,                 
+	CYAN,                  
+	RED,                   
+	MAGENTA,              
+	BROWN,                
+	LIGHTGRAY,           
+	DARKGRAY,              
+	LIGHTBLUE,             
+	LIGHTGREEN,            
+	LIGHTCYAN,             
+	LIGHTRED,              
+	LIGHTMAGENTA,          
+	YELLOW,                
+	WHITE                  
+};
+
+//cores do fundo
+enum {
+	_BLACK = 0,                  
+	_BLUE = 16,                 
+	_GREEN = 32,                
+	_CYAN = 48,                  
+	_RED = 64,                  
+	_MAGENTA = 80,              
+	_BROWN = 96,                
+	_LIGHTGRAY = 112,           
+	_DARKGRAY = 128,         
+	_LIGHTBLUE = 144,          
+	_LIGHTGREEN = 160,         
+	_LIGHTCYAN = 176,            
+	_LIGHTRED = 192,           
+	_LIGHTMAGENTA = 208,         
+	_YELLOW = 224,               
+	_WHITE = 240       
+};
+
+//teclas
+enum {
+	teclaEnter = 13,
+	teclaEsc = 27,
+	teclaSetaCima = 72,
+	teclaSetaBaixo = 80,
+	teclaSetaEsquerda = 75,
+	teclaSetaDireita = 77,
+};
+
 typedef enum {
 	soma = '+',
 	subtracao = '-',
@@ -37,7 +88,51 @@ void linhaCol(int lin, int col) {
 	SetConsoleCursorInfo(console, &cursor);
 }
 
+void textColor(int letras, int fundo) {
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), letras + fundo);
+}
 
+void menu(int lin, int col, int opcoes[]) {
+	int i, lin2, col2, opcao = 0, teclaPressionada, tamOpcoes[2];
+	tamOpcoes[0] = snprintf(NULL, 0, "%d", opcoes[0]), tamOpcoes[1] = snprintf(NULL, 0, "%d", opcoes[1]);
+	while (1) {
+		for (i = 0; i < 4; i++) {
+			col2 = col;
+			if (i >= 2) {
+				col2 += 15;
+			}
+			else {
+				col2 += 6 - tamOpcoes[i];
+			}
+			if (i == opcao) {
+				textColor(BLACK, _WHITE);
+			}
+			else {
+				textColor(WHITE, _BLACK);
+			}
+			linhaCol(lin + (i%2)*2, col2);
+			printf("%d", opcoes[i]);
+		}
+
+		teclaPressionada = getch();
+		if (teclaPressionada == teclaEnter) {
+			break;
+		}
+		else if (teclaPressionada == teclaSetaCima && opcao % 2 != 0) {
+			opcao--;
+		}
+		else if (teclaPressionada == teclaSetaBaixo && opcao % 2 == 0) {
+			opcao++;
+		}
+		else if (teclaPressionada == teclaSetaEsquerda && opcao >= 2) {
+			opcao = opcao - 2;
+		}
+		else if (teclaPressionada == teclaSetaDireita && opcao < 2) {
+			opcao = opcao + 2;
+		}
+	}
+	return opcao;
+}
 
 
 int calcularResposta(Expressao expressao) {
@@ -56,7 +151,6 @@ int calcularResposta(Expressao expressao) {
 		return NULL;
 	}
 }
-
 
 int tamanhoExpressao(int n1) {
 	int tamanho = 0;
@@ -150,10 +244,7 @@ void printarExpressao(Expressao expressao, int opcoes[]) {
 	linhaCol(4, 23);
 	printf("%d", expressao.n2);
 
-	for (int i = 0; i < 4; i++) {
-		linhaCol(6 + i, 15);
-		printf("Opcao %d: %d", i + 1, opcoes[i]);
-	}
+	menu(6, 11, opcoes);
 }
 
 
