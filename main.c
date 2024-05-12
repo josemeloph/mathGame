@@ -60,7 +60,7 @@ void gerarExpressao(Expressao *expressao) {
 		} while (num1 < num2 || num1 % num2 != 0);
 		break;
 	case exponenciacao:
-		num2 = rand() % 15 + 1;
+		num2 = rand() % 13 + 1;
 		if (num2 > 3) num1 = 2;
 		else if (num2 == 3) num1 = rand() % 11 + 1;
 		else num1 = rand() % 50 + 1;
@@ -81,17 +81,28 @@ int gerarOpcao(int resposta) {
 	case 3:
 		return resposta + (rand() % 5 + 1);
 	case 4:
-		return resposta - (rand() % 5 + 1);
+		return resposta + (pow(10, rand() % 4));
 	}
 }
 
+int opcaoJaGerada(int opcao, int opcoesGeradas[4]) {
+	for (int i = 0; i < 4; i++) {
+		if (opcao == opcoesGeradas[i]) {
+			return 1;
+		}
+	}
+	return 0;
+}
 
 void gerarOpcoes(int resposta, int opcoes[]) {
-	int posResposta = rand() % 4;
-	opcoes[posResposta] = resposta;
+	int opcoesGeradas[4], posResposta = rand() % 4;
+	opcoes[posResposta] = opcoesGeradas[posResposta] = resposta;
 	for (int i = 0; i < 4; i++) {
 		if (i != posResposta) {
-			opcoes[i] = gerarOpcao(resposta);
+			do {
+				opcoes[i] = gerarOpcao(resposta);
+			} while (opcaoJaGerada(opcoes[i], opcoesGeradas));
+			opcoesGeradas[i] = opcoes[i];
 		}
 	}
 }
