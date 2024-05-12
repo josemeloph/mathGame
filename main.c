@@ -1,6 +1,9 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <windows.h>
 
 typedef enum {
 	soma = '+',
@@ -20,7 +23,24 @@ typedef struct {
 Operacao _operacoes[5] = { soma, subtracao, multiplicacao, divisao, exponenciacao };
 int _opcoes[4];
 
-int calcular(Expressao expressao) {
+
+void linhaCol(int lin, int col) {
+	COORD posicao;
+	posicao.X = col - 1;
+	posicao.Y = lin - 1;
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), posicao);
+
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO cursor;
+	cursor.dwSize = 100;
+	cursor.bVisible = 0;
+	SetConsoleCursorInfo(console, &cursor);
+}
+
+
+
+
+int calcularResposta(Expressao expressao) {
 	switch (expressao.op) {
 	case soma:
 		return expressao.n1 + expressao.n2;
@@ -32,7 +52,19 @@ int calcular(Expressao expressao) {
 		return expressao.n1 / expressao.n2;
 	case exponenciacao:
 		return pow(expressao.n1, expressao.n2);
+	default:
+		return NULL;
 	}
+}
+
+
+int tamanhoExpressao(int n1) {
+	int tamanho = 0;
+	for (int i = 1000; i >= 10; i = i / 10) {
+		if ((float)n1 / i >= 1.0)
+			tamanho++;
+	}
+	return tamanho;
 }
 
 void gerarExpressao(Expressao *expressao) {
@@ -67,6 +99,7 @@ void gerarExpressao(Expressao *expressao) {
 	}
 	expressao->n1 = num1;
 	expressao->n2 = num2;
+	expressao->tamanho = tamanhoExpressao(num1);
 }
 
 int gerarOpcao(int resposta) {
@@ -82,6 +115,8 @@ int gerarOpcao(int resposta) {
 		return resposta + (rand() % 5 + 1);
 	case 4:
 		return resposta + (pow(10, rand() % 4));
+	default:
+		return -1;
 	}
 }
 
@@ -107,18 +142,28 @@ void gerarOpcoes(int resposta, int opcoes[]) {
 	}
 }
 
+void printarExpressao(Expressao expressao, int opcoes[]) {
+	linhaCol(4, 19 - expressao.tamanho);
+	printf("%d", expressao.n1);
+	linhaCol(4, 21);
+	printf("%c", expressao.op);
+	linhaCol(4, 23);
+	printf("%d", expressao.n2);
+
+	for (int i = 0; i < 4; i++) {
+		linhaCol(6 + i, 15);
+		printf("Opcao %d: %d", i + 1, opcoes[i]);
+	}
+}
+
 
 int main() {
+	system("MODE con cols=41 lines=15 ");
 	srand(time(NULL));
 	int resposta;
 	Expressao expressao;
 	gerarExpressao(&expressao);
-	printf("Expressao: %d %c %d", expressao.n1, expressao.op, expressao.n2);
-	resposta = calcular(expressao);
-	printf("\nResposta : %d\n", resposta);
+	resposta = calcularResposta(expressao);
 	gerarOpcoes(resposta, _opcoes);
-	for (int i = 0; i < 4; i++) {
-		printf("\nOpcao %d: %d", i + 1, _opcoes[i]);
-	}
-	
+	printarExpressao(expressao, _opcoes);
 }
