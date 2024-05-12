@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 typedef enum {
 	soma = '+',
@@ -16,12 +17,27 @@ typedef struct {
 	int tamanho;
 }Expressao;
 
-Operacao operacoes[5] = { soma, subtracao, multiplicacao, divisao, exponenciacao };
+Operacao _operacoes[5] = { soma, subtracao, multiplicacao, divisao, exponenciacao };
+int _opcoes[4];
 
+int calcular(Expressao expressao) {
+	switch (expressao.op) {
+	case soma:
+		return expressao.n1 + expressao.n2;
+	case subtracao:
+		return expressao.n1 - expressao.n2;
+	case multiplicacao:
+		return expressao.n1 * expressao.n2;
+	case divisao:
+		return expressao.n1 / expressao.n2;
+	case exponenciacao:
+		return pow(expressao.n1, expressao.n2);
+	}
+}
 
 void gerarExpressao(Expressao *expressao) {
 	int num1, num2;
-	expressao->op = operacoes[rand() % 5];
+	expressao->op = _operacoes[rand() % 5];
 	switch (expressao->op) {
 	case soma:
 		num1 = rand() % 1990 + 10;
@@ -53,10 +69,45 @@ void gerarExpressao(Expressao *expressao) {
 	expressao->n2 = num2;
 }
 
+int gerarOpcao(int resposta) {
+	int tipoDeOpcao = rand() % 5;
+	switch (tipoDeOpcao) {
+	case 0:
+		return resposta + (rand() % resposta);
+	case 1:
+		return resposta - (rand() % resposta);
+	case 2:
+		return resposta * (rand() % 2 + 2);
+	case 3:
+		return resposta + (rand() % 5 + 1);
+	case 4:
+		return resposta - (rand() % 5 + 1);
+	}
+}
+
+
+void gerarOpcoes(int resposta, int opcoes[]) {
+	int posResposta = rand() % 4;
+	opcoes[posResposta] = resposta;
+	for (int i = 0; i < 4; i++) {
+		if (i != posResposta) {
+			opcoes[i] = gerarOpcao(resposta);
+		}
+	}
+}
+
 
 int main() {
 	srand(time(NULL));
+	int resposta;
 	Expressao expressao;
 	gerarExpressao(&expressao);
-	printf("%d %c %d", expressao.n1, expressao.op, expressao.n2);
+	printf("Expressao: %d %c %d", expressao.n1, expressao.op, expressao.n2);
+	resposta = calcular(expressao);
+	printf("\nResposta : %d\n", resposta);
+	gerarOpcoes(resposta, _opcoes);
+	for (int i = 0; i < 4; i++) {
+		printf("\nOpcao %d: %d", i + 1, _opcoes[i]);
+	}
+	
 }
