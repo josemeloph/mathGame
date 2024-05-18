@@ -1,49 +1,30 @@
-#define _CRT_SECURE_NO_WARNINGS
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <windows.h>
 
 
-//cores do texto
+//cores da letra
 enum {
-	BLACK,                 
-	BLUE,                  
-	GREEN,                 
-	CYAN,                  
-	RED,                   
-	MAGENTA,              
-	BROWN,                
-	LIGHTGRAY,           
-	DARKGRAY,              
-	LIGHTBLUE,             
-	LIGHTGREEN,            
-	LIGHTCYAN,             
-	LIGHTRED,              
-	LIGHTMAGENTA,          
-	YELLOW,                
-	WHITE                  
+	PRETO = 0,                 
+	AZUL = 1,                  
+	VERDE = 2,                                   
+	VERMELHO = 4,                                
+	CINZA_CLARO = 7,           
+	CINZA_ESCURO = 8,              
+	AZUL_CLARO = 9,             
+	VERDE_CLARO = 10,                    
+	AMARELO = 14,                
+	BRANCO = 15                  
 };
 
 //cores do fundo
 enum {
-	_BLACK = 0,                  
-	_BLUE = 16,                 
-	_GREEN = 32,                
-	_CYAN = 48,                  
-	_RED = 64,                  
-	_MAGENTA = 80,              
-	_BROWN = 96,                
-	_LIGHTGRAY = 112,           
-	_DARKGRAY = 128,         
-	_LIGHTBLUE = 144,          
-	_LIGHTGREEN = 160,         
-	_LIGHTCYAN = 176,            
-	_LIGHTRED = 192,           
-	_LIGHTMAGENTA = 208,         
-	_YELLOW = 224,               
-	_WHITE = 240       
+	_PRETO = 0,                  
+	_AZUL = 16,                 
+	_VERDE = 32,                                
+	_VERMELHO = 64,                                                   
+	_BRANCO = 240       
 };
 
 //teclas
@@ -73,7 +54,8 @@ typedef struct {
 
 Operacao _operacoes[5] = { soma, subtracao, multiplicacao, divisao, exponenciacao };
 int _opcoes[4];
-
+int _tempoAcabou = 0;
+int _tempo = 0;
 
 void linhaCol(int lin, int col) {
 	COORD posicao;
@@ -92,8 +74,55 @@ void textColor(int letras, int fundo) {
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), letras + fundo);
 }
 
-int menu(int lin, int col, int opcoes[]) {
-	int i, lin2, col2, opcao = 0, teclaPressionada, tamOpcoes[2];
+int menu(int lin1, int col1, int qtd, char lista[3][40]) {
+	int i, lin2, opcao = 0, teclaPressionada;
+
+	while (1) {
+		lin2 = lin1;
+		for (i = 0; i < qtd; i++) {
+			if (i == opcao) {
+				textColor(PRETO, _BRANCO);
+			}
+			else {
+				textColor(BRANCO, _PRETO);
+			}
+			linhaCol(lin2, col1 + 2);
+			printf("%s", lista[i]);
+			lin2 += 2;
+		}
+
+		teclaPressionada = getch();
+
+		if (teclaPressionada == teclaEsc) { 
+			opcao = -1; 
+			break;
+		}
+		else if (teclaPressionada == teclaEnter) {
+			break;
+		}
+		else if (teclaPressionada == teclaSetaCima) {
+			if (opcao > 0)opcao--;   
+
+		}
+		else if (teclaPressionada == teclaSetaBaixo) {
+			if (opcao < qtd - 1)opcao++;  ;     
+		}
+	}
+	return opcao;
+}
+
+
+int customGetch() {
+	while (!_tempoAcabou) {
+		if (kbhit()) {
+			return getch();
+		}
+	}
+	return -1;
+}
+
+int menuOpcoes(int lin, int col, int opcoes[]) {
+	int i, col2, opcao = 0, teclaPressionada, tamOpcoes[2];
 	tamOpcoes[0] = snprintf(NULL, 0, "%d", opcoes[0]), tamOpcoes[1] = snprintf(NULL, 0, "%d", opcoes[1]);
 	while (1) {
 		for (i = 0; i < 4; i++) {
@@ -105,16 +134,21 @@ int menu(int lin, int col, int opcoes[]) {
 				col2 += 6 - tamOpcoes[i];
 			}
 			if (i == opcao) {
-				textColor(BLACK, _WHITE);
+				textColor(PRETO, _BRANCO);
 			}
 			else {
-				textColor(WHITE, _BLACK);
+				textColor(BRANCO, _PRETO);
 			}
-			linhaCol(lin + (i%2)*2, col2);
+			linhaCol(lin + (i % 2) * 2, col2);
 			printf("%d", opcoes[i]);
+		}		
+		if (_tempoAcabou) {
+			return -1;
+		}
+		else {
+			teclaPressionada = customGetch();
 		}
 
-		teclaPressionada = getch();
 		if (teclaPressionada == teclaEnter) {
 			break;
 		}
@@ -131,7 +165,7 @@ int menu(int lin, int col, int opcoes[]) {
 			opcao = opcao + 2;
 		}
 	}
-	textColor(WHITE, _BLACK);
+	textColor(BRANCO, _PRETO);
 	return opcao;
 }
 
@@ -163,6 +197,7 @@ int tamanhoExpressao(int n1) {
 }
 
 void gerarExpressao(Expressao *expressao) {
+
 	int num1, num2;
 	expressao->op = _operacoes[rand() % 5];
 	switch (expressao->op) {
@@ -237,7 +272,17 @@ void gerarOpcoes(int resposta, int opcoes[]) {
 	}
 }
 
-void gerarQuestao(int opcoes[], int *certas) {
+int printarExpressao(Expressao expressao, int opcoes[]) {
+	linhaCol(4, 19 - expressao.tamanho);
+	printf("%d", expressao.n1);
+	linhaCol(4, 21);
+	printf("%c", expressao.op);
+	linhaCol(4, 23);
+	printf("%d", expressao.n2);
+	return menuOpcoes(6, 11, opcoes);
+}
+
+int gerarQuestao(int opcoes[], int* certas) {
 	Expressao expressao;
 	int resposta, opcaoSelecionada;
 
@@ -246,38 +291,86 @@ void gerarQuestao(int opcoes[], int *certas) {
 	gerarOpcoes(resposta, opcoes);
 	opcaoSelecionada = printarExpressao(expressao, opcoes);
 
-	if (resposta == opcoes[opcaoSelecionada]) (*certas)++;
+	if (resposta == opcoes[opcaoSelecionada]) {
+		(*certas)++;
+		return 1;
+	}
+	return 0;
 }
 
-int printarExpressao(Expressao expressao, int opcoes[]) {
-	linhaCol(4, 19 - expressao.tamanho);
-	printf("%d", expressao.n1);
-	linhaCol(4, 21);
-	printf("%c", expressao.op);
-	linhaCol(4, 23);
-	printf("%d", expressao.n2);
-	return menu(6, 11, opcoes);
+DWORD WINAPI threadQuestoes(LPVOID parametro) {
+	int acertou, maxQuestoes = parametro, certas = 0;
+	srand(time(NULL));
+	if (maxQuestoes == 0) {
+		while (!_tempoAcabou) {
+
+			for (int i = 4; i < 15; i++) {
+				linhaCol(i, 1);
+				printf("                                                                   ");
+			}
+			linhaCol(14, 10);
+			printf("Certas: %d", certas);
+			acertou = gerarQuestao(_opcoes, &certas);
+			if (!acertou) {
+				_tempo -= 5;
+			}
+		}
+	}
+	return certas;
 }
 
+DWORD WINAPI threadCronometro() {	
+	if (_tempo != 0) {
+		while (_tempo >= 0) {
+			Sleep(1000);
+			_tempo--;
+			linhaCol(2, 10);
+			textColor(BRANCO, _PRETO);
+			printf("00:%02d", _tempo);
+		}
+	}
+	else {
 
+	}
+	_tempoAcabou = 1;
+	return _tempo;
+}
+
+int inicializarJogo(int modoDeJogo) {
+	int maxQuestoes;
+	HANDLE threads[2];
+	DWORD idThreads[2];
+
+
+	system("cls");
+	if (modoDeJogo == 0) {
+		_tempo = 60, maxQuestoes = 0;
+		threads[0] = CreateThread(NULL, 0, threadCronometro, NULL, 0, &idThreads[0]);
+		threads[1] = CreateThread(NULL, 0, threadQuestoes, maxQuestoes, 0, &idThreads[1]);
+
+		WaitForMultipleObjects(2, threads, 1, INFINITE);
+
+		int certas;
+		GetExitCodeThread(threads[1], (LPDWORD)&certas);
+		system("cls");
+		printf("\nQuestoes corretas: %d\n", certas);
+		CloseHandle(threads[0]);
+		CloseHandle(threads[1]);
+	}
+}
 
 int main() {
 	system("MODE con cols=41 lines=15 ");
-	srand(time(NULL));
-	
-	int certas, total, qtdQuestoes;
-	qtdQuestoes = 10;
-	certas = total = 0;
+	int opcaoSelecionada, modoDeJogo = 0, tamanhoLista = 4;
+	char lista[4][40] = { " JOGAR ", " MODOS DE JOGO ", " RANKING ", " CREDITOS " };
+	opcaoSelecionada = menu(4, 6, tamanhoLista, lista);
 
-	while (total < qtdQuestoes) {
-		system("cls");
-		total++;
-		linhaCol(14, 12);
-		printf("Total: %d", total);
-		linhaCol(14, 22);
-		printf("Certas: %d", certas);
-		gerarQuestao(_opcoes, &certas);
+	if (opcaoSelecionada == 0) {
+		inicializarJogo(modoDeJogo);
 	}
+	else if (opcaoSelecionada == 1) {
+	}
+
 	getch();
 	system("cls");
 }
